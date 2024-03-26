@@ -185,8 +185,17 @@ class Velocity:
 
 class Particle:
     def __init__(self, items, kapals):
+        self.items = items
+        self.kapals = kapals
         self.positions = []
         self.velocities = []
+        self.pb = math.inf
+        self.pb_pos = []
+        self.pb_vel = []
+        self.gb = math.inf
+        self.gb_pos = []
+        self.gb_vel = []
+        self.fitness = math.inf
         
         idx = 0
         for i in range(len(items)):
@@ -217,23 +226,37 @@ class Particle:
             idx+=1
         
     def __str__(self):
-        s = "Pos: \n"
-        
+        s = "Positions: \n"
         for pos in self.positions:
             s += str(pos)
             s += "\n"
     
-        s += "\nVel:\n"
-        
+        s += "\nVelocities:\n"
         for vel in self.velocities:
             s += str(vel)
             s += "\n"
         
-        s += "\n"
+        s += "\nFitness: " + self.fitness
+        s += "\nPersonal Best: " + self.pb
+        s += "\nGlobal Best: " + self.gb
         
-        return s
+        return s + "\n"
+   
+   def calculateFitness(self):
+       biaya_per_km = 1000
+       fitness = 0
+       for kapal in self.kapals:
+           fitness += biaya_per_km * kapal.jarak
+        
+        
+       
+       
+    
+
         
 # main
+
+# Items
 items_data = [
     [1, "xxx1", "Umum", 10, 1000, 1],
     [2, "xxx2", "Umum", 20, 1000, 2],
@@ -252,8 +275,11 @@ for data in items_data:
 # Mencetak informasi setiap item dalam array
 for item in items:
     print(item)
-    
-    
+print()
+
+
+
+#  Kapals
 kapals_data = [
     [1, "Kapal 1", 50, 5, 10, 3, 4, [1, 3, 4, 2], 15, 15000],
     [2, "Kapal 2", 60, 7, 20, 1, 5, [1, 2, 4, 3], 14, 14000],
@@ -269,12 +295,18 @@ for data in kapals_data:
 # Mencetak informasi setiap kapal dalam array
 for kapal in kapals:
     print(kapal)
+print()
+
 
 
 # Generate particle
 particles = []
-for i in range(6):
+for i in range(len(items) * len(kapals)):
     particles.append(Particle(items, kapals))
 
-for par in particles:
-    print(par)
+
+
+# Iteration
+for iter in range(100):
+
+
