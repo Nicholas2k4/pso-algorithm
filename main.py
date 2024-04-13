@@ -1,5 +1,9 @@
 import random
 import math
+import matplotlib.pyplot as plt
+import numpy as np
+from tabulate import tabulate as tab
+
 
 ROUTE = [
     [0, 0, 0, 0, 0],
@@ -12,7 +16,7 @@ Z_MAX = 100
 INF = 1000000000000
 PENALTY = 5000
 TEST = True
-PARTICLE_COUNT = 1000
+PARTICLE_COUNT = 100
 
 def rnd(lower_bound, upper_bound):
     return random.uniform(lower_bound, upper_bound - 0.0000000001)
@@ -162,15 +166,15 @@ class Particle:
             id_kapal_int = math.floor(self.positions[i].id_kapal)
             
             # Jika item tidak masuk manapun
-            if id_kapal_int == len(self.kapals):
-                total_route = 0
-                for row in ROUTE:
-                    for val in row:
-                        total_route += val
-                fitness += self.items[i].bobot * PENALTY * total_route
+            # if id_kapal_int == len(self.kapals):
+            #     total_route = 0
+            #     for row in ROUTE:
+            #         for val in row:
+            #             total_route += val
+            #     fitness += self.items[i].bobot * PENALTY * total_route
                 
             # Masuk kapal tertentu
-            else:
+            if id_kapal_int < len(self.kapals):
                 if self.items[i].tujuan != self.kapals[id_kapal_int].rute[0]:  
                     kapal_weight[id_kapal_int] += self.items[i].bobot
                     kapal_items[id_kapal_int].append(self.items[i])
@@ -223,9 +227,9 @@ kapals_data = [
     # [1, "Kapal 1", 50, 5, 10, 3, 4, [1, 3, 4, 2], 15, 15000],
     # [2, "Kapal 2", 60, 7, 20, 1, 5, [1, 2, 4, 3], 14, 14000],
     # [3, "Kapal 3", 60, 6, 10, 3, 4, [1, 4, 3, 2], 15, 15000]
-    [1, "Kapal 1", 50000, 1, 1, 1, 1, [1, 3, 4, 2], 15, 15000],
-    [2, "Kapal 2", 60000, 1, 1, 1, 1, [1, 2, 4, 3], 14, 14000],
-    [3, "Kapal 3", 60000, 1, 1, 1, 1, [1, 4, 3, 2], 15, 15000]
+    [1, "Kapal 1", 50, 1, 10, 1, 2, [1, 3, 4, 2], 15, 15000],
+    [2, "Kapal 2", 60, 5, 20, 3, 1, [1, 2, 4, 3], 14, 14000],
+    [3, "Kapal 3", 2000, 1, 8, 1, 10, [1, 4, 3, 2], 15, 11000],
 ]
 
 kapals = []
@@ -235,11 +239,12 @@ for data in kapals_data:
     kapals.append(kapal)
 
 # Mencetak informasi setiap kapal dalam array
-for kapal in kapals:
-    print(kapal)
-print()
+# for kapal in kapals:
+    # print(kapal)
+kapal_header = ["ID", "Nama", "Bobot", "X Maks U", "Y Maks U", "X Maks K", "Y Maks K", "Rute", "Jarak", "Biaya"]
+print(tab(kapals_data, headers=kapal_header, tablefmt="grid"))
 
-
+print('\n')
 
 # Items
 items_data = [
@@ -292,9 +297,13 @@ for data in items_data:
     items.append(item)
 
 # Mencetak informasi setiap item dalam array
-for item in items:
-    print(item)
-print()
+# for item in items:
+#     print(item)
+
+item_header = ["ID", "Nama", "Jenis", "Bobot", "Biaya per Ton", "Tujuan"]
+print(tab(items_data, headers=item_header, tablefmt="grid"))
+
+
 
 
 
@@ -310,8 +319,11 @@ gb_list = []
 iter = 0
 
 # Iteration
+
+y = []
 while True:
     # Hitung fitness
+    y.append([])
     for i in range(len(particles)):
         particles[i].fitness = particles[i].calculateFitness()
         # print(f"Particle {i}: {particles[i].fitness}")
@@ -324,6 +336,7 @@ while True:
         elif particles[i].pb > particles[i].fitness:
             particles[i].pb = particles[i].fitness
             particles[i].pb_pos = particles[i].positions
+        y[iter].append(particles[i].pb)
 
     
     # Tentukan global best baru
@@ -393,11 +406,34 @@ while True:
     
     print("Iteration " + str(iter) + ": " + str(max_gb))
     gb_list.append(max_gb)
-    
+
+
     if iter >= same_gb_limit - 1:
         if gb_list[iter-same_gb_limit + 1] == gb_list[iter]:
             break
 
     w = w - w_step
     iter += 1
-        
+
+
+
+x = range(iter+1)
+# print(x[iter])
+for i in range(PARTICLE_COUNT):
+    #get particle pb from y
+    value = []
+    for j in range(len(y)):
+        pb = y[j][i]
+        value.append(pb)
+
+    # print(value)
+    plt.plot(x, value, 'o-', label=f'Particle {i}')
+plt.grid()
+plt.xlabel("Iterasi")
+plt.ylabel("Personal Best")
+plt.title("Particle's Pb Movement") #Judul grafik
+plt.axis([0, iter+2, 0,10e5])
+plt.legend()
+plt.show()
+
+
