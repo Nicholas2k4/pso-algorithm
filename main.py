@@ -313,18 +313,19 @@ print(tab(items_data, headers=item_header, tablefmt="grid"))
 btn_rerun = None  # Declare btn_rerun as a global variable
 btn_label = 'Rerun'
 fig = plt.figure(figsize=(12, 6))  # Width: 10 inches, Height: 6 inches
+max_iter = 100
 
 
 def plot_data(): 
 
-    global btn_rerun, btn_label  # Declare btn_rerun as a global variable
+    global btn_rerun, btn_label, max_iter  # Declare btn_rerun as a global variable
     
     # Generate particle
     particles = []
     for i in range(PARTICLE_COUNT):
         particles.append(Particle(items, kapals))
 
-    w = 0.9
+    w = 0.5
     w_step = -0.005
     same_gb_limit = 5
     gb_list = []
@@ -373,8 +374,8 @@ def plot_data():
                 vz = particles[i].velocities[j].z
                 vid = particles[i].velocities[j].id_kapal
                 
-                c1 = 2
-                c2 = 2
+                c1 = 1
+                c2 = 1
                 
                 vx = w * rnd(0,1) * vx + c1 * rnd(0,1) * (particles[i].pb_pos[j].x - particles[i].positions[j].x) + c2 * rnd(0, 1) * (particles[i].gb_pos[j].x - particles[i].positions[j].x)
                 vy = w * rnd(0,1) * vy + c1 * rnd(0,1) * (particles[i].pb_pos[j].y - particles[i].positions[j].y) + c2 * rnd(0, 1) * (particles[i].gb_pos[j].y - particles[i].positions[j].y)
@@ -448,12 +449,14 @@ def plot_data():
         # adjust animation
         plt.draw()
         plt.pause(0.1)
+        
         if iter >= same_gb_limit - 1:
             if gb_list[iter-same_gb_limit + 1] == gb_list[iter]:
                 break
         iter += 1
 
     # Create a button and connect it to the rerun function
+    print()
     if (btn_rerun == None):
         ax_button = plt.axes([0.78, 0.15, 0.1, 0.05])  # [left, bottom, width, height]
         btn_rerun = Button(ax_button, 'Rerun')
