@@ -1,5 +1,11 @@
 import random
 import math
+import matplotlib.pyplot as plt
+import numpy as np
+from tabulate import tabulate as tab
+
+from matplotlib.widgets import Button
+
 
 ROUTE = [
     [0, 0, 0, 0, 0],
@@ -12,7 +18,7 @@ Z_MAX = 100
 INF = 1000000000000
 PENALTY = 5000
 TEST = True
-PARTICLE_COUNT = 1000
+PARTICLE_COUNT = 50
 
 def rnd(lower_bound, upper_bound):
     return random.uniform(lower_bound, upper_bound - 0.0000000001)
@@ -134,9 +140,9 @@ class Particle:
             s += str(vel)
             s += "\n"
         
-        s += "\nFitness: " + self.fitness
-        s += "\nPersonal Best: " + self.pb
-        s += "\nGlobal Best: " + self.gb
+        s += "\nFitness: " + str(self.fitness)
+        s += "\nPersonal Best: " + str(self.pb)
+        s += "\nGlobal Best: " + str(self.gb)
         
         return s + "\n"
    
@@ -170,7 +176,7 @@ class Particle:
                 fitness += self.items[i].bobot * PENALTY * total_route
                 
             # Masuk kapal tertentu
-            else:
+            if id_kapal_int < len(self.kapals):
                 if self.items[i].tujuan != self.kapals[id_kapal_int].rute[0]:  
                     kapal_weight[id_kapal_int] += self.items[i].bobot
                     kapal_items[id_kapal_int].append(self.items[i])
@@ -223,9 +229,12 @@ kapals_data = [
     # [1, "Kapal 1", 50, 5, 10, 3, 4, [1, 3, 4, 2], 15, 15000],
     # [2, "Kapal 2", 60, 7, 20, 1, 5, [1, 2, 4, 3], 14, 14000],
     # [3, "Kapal 3", 60, 6, 10, 3, 4, [1, 4, 3, 2], 15, 15000]
-    [1, "Kapal 1", 50000, 1, 1, 1, 1, [1, 3, 4, 2], 15, 15000],
-    [2, "Kapal 2", 60000, 1, 1, 1, 1, [1, 2, 4, 3], 14, 14000],
-    [3, "Kapal 3", 60000, 1, 1, 1, 1, [1, 4, 3, 2], 15, 15000]
+    [1, "Kapal 1", 230, 1, 10, 1, 2, [1, 3, 4, 2], 15, 15000],
+    [2, "Kapal 2", 400, 5, 20, 3, 1, [1, 2, 4, 3], 14, 13000],
+    [3, "Kapal 3", 100, 1, 8, 1, 10, [1, 4, 3, 2], 15, 11000],
+    [4, "Kapal 4", 500, 1, 10, 1, 2, [1, 3, 2, 4], 16, 12500],
+    [5, "Kapal 5", 200, 5, 20, 3, 1, [1, 2, 3, 4], 16, 10000],
+    [6, "Kapal 6", 350, 1, 8, 1, 10, [1, 4, 2, 3], 14, 9000],
 ]
 
 kapals = []
@@ -235,9 +244,13 @@ for data in kapals_data:
     kapals.append(kapal)
 
 # Mencetak informasi setiap kapal dalam array
-for kapal in kapals:
-    print(kapal)
-print()
+# for kapal in kapals:
+    # print(kapal)
+kapal_header = ["ID", "Nama", "Bobot", "X Maks U", "Y Maks U", "X Maks K", "Y Maks K", "Rute", "Jarak", "Biaya"]
+print(tab(kapals_data, headers=kapal_header, tablefmt="grid"))
+
+print('\n')
+
 
 
 
@@ -287,117 +300,209 @@ items_data = [
 
 items = []
 
+
+def multiplyPrice(by):
+    global items
+    for item in items:
+        item.biaya_per_ton *= by
+
 for data in items_data:
     item = Item(*data)
     items.append(item)
 
 # Mencetak informasi setiap item dalam array
-for item in items:
-    print(item)
-print()
+# for item in items:
+#     print(item)
+
+multiplyPrice(1)
+
+item_header = ["ID", "Nama", "Jenis", "Bobot", "Biaya per Ton", "Tujuan"]
+print(tab(items_data, headers=item_header, tablefmt="grid"))
 
 
 
-# Generate particle
-particles = []
-for i in range(PARTICLE_COUNT):
-    particles.append(Particle(items, kapals))
+btn_rerun = None  # Declare btn_rerun as a global variable
+btn_label = 'Rerun'
+fig = plt.figure(figsize=(12, 6))  # Width: 10 inches, Height: 6 inches
+max_iter = 100
 
-w = 0.9
-w_step = -0.005
-same_gb_limit = 5
-gb_list = []
-iter = 0
 
-# Iteration
-while True:
-    # Hitung fitness
-    for i in range(len(particles)):
-        particles[i].fitness = particles[i].calculateFitness()
-        # print(f"Particle {i}: {particles[i].fitness}")
-        
-        if iter == 0:
-            particles[i].pb = particles[i].fitness
-            particles[i].pb_pos = particles[i].positions
-            particles[i].gb = particles[i].fitness
-            particles[i].gb_pos = particles[i].positions
-        elif particles[i].pb > particles[i].fitness:
-            particles[i].pb = particles[i].fitness
-            particles[i].pb_pos = particles[i].positions
+def plot_data(): 
 
+    global btn_rerun, btn_label, max_iter  # Declare btn_rerun as a global variable
     
-    # Tentukan global best baru
-    max_gb = particles[0].gb
-    max_gb_pos = particles[0].gb_pos
-    
-    for i in range(len(particles)):
-        if particles[i].fitness < max_gb:
-            max_gb = particles[i].fitness
-            max_gb_pos = particles[i].positions
-            
-    for i in range(len(particles)):
-        particles[i].gb = max_gb
-        particles[i].gb_pos = max_gb_pos
-        
-        
-    # Update velocity
-    for i in range(len(particles)):
-        for j in range(len(particles[i].velocities)):        
-            vx = particles[i].velocities[j].x
-            vy = particles[i].velocities[j].y
-            vz = particles[i].velocities[j].z
-            vid = particles[i].velocities[j].id_kapal
-            
-            c1 = 2
-            c2 = 2
-            
-            vx = w * rnd(0,1) * vx + c1 * rnd(0,1) * (particles[i].pb_pos[j].x - particles[i].positions[j].x) + c2 * rnd(0, 1) * (particles[i].gb_pos[j].x - particles[i].positions[j].x)
-            vy = w * rnd(0,1) * vy + c1 * rnd(0,1) * (particles[i].pb_pos[j].y - particles[i].positions[j].y) + c2 * rnd(0, 1) * (particles[i].gb_pos[j].y - particles[i].positions[j].y)
-            vz = w * rnd(0,1) * vz + c1 * rnd(0,1) * (particles[i].pb_pos[j].z - particles[i].positions[j].z) + c2 * rnd(0, 1) * (particles[i].gb_pos[j].z - particles[i].positions[j].z)
-            vid = w * rnd(0,1) * vid + c1 * rnd(0,1) * (particles[i].pb_pos[j].id_kapal - particles[i].positions[j].id_kapal) + c2 * rnd(0, 1) * (particles[i].gb_pos[j].id_kapal - particles[i].positions[j].id_kapal)
-            
-            particles[i].velocities[j].x = vx
-            particles[i].velocities[j].y = vy
-            particles[i].velocities[j].z = vz
-            particles[i].velocities[j].id_kapal = vid
-            
-            
-    # Update position
-    for i in range(len(particles)):
-        for j in range(len(particles[i].positions)):
-            px = particles[i].positions[j].x
-            py = particles[i].positions[j].y
-            pz = particles[i].positions[j].z
-            pid = particles[i].positions[j].id_kapal
-            
-            px += particles[i].velocities[j].x
-            py += particles[i].velocities[j].y
-            pz += particles[i].velocities[j].z
-            pid += particles[i].velocities[j].id_kapal
-            
-            pid = max(0, min(pid, len(kapals)))
-            pid_int = math.floor(pid)
-            
-            if pid_int != len(kapals):
-                if particles[i].items[j].jenis == "Umum":
-                    px = max(1, min(px, kapals[pid_int].x_max_umum))
-                    py = max(1, min(py, kapals[pid_int].y_max_umum))
-                else:
-                    px = max(1, min(px, kapals[pid_int].x_max_khusus))
-                    py = max(1, min(py, kapals[pid_int].y_max_khusus))
-            
-            particles[i].positions[j].x = px
-            particles[i].positions[j].y = py
-            particles[i].positions[j].z = pz
-            particles[i].positions[j].id_kapal = pid
-    
-    print("Iteration " + str(iter) + ": " + str(max_gb))
-    gb_list.append(max_gb)
-    
-    if iter >= same_gb_limit - 1:
-        if gb_list[iter-same_gb_limit + 1] == gb_list[iter]:
-            break
+    # Generate particle
+    particles = []
+    for i in range(PARTICLE_COUNT):
+        particles.append(Particle(items, kapals))
 
-    w = w - w_step
-    iter += 1
+    w = 0.5
+    w_step = -0.005
+    same_gb_limit = 5
+    gb_list = []
+    iter = 0
+    y = []
+    GB_PARTICLE = None
+    
+    # Iteration
+    while True:
+        # Hitung fitness
+        y.append([])
+        for i in range(len(particles)):
+            particles[i].fitness = particles[i].calculateFitness()
+            # print(f"Particle {i}: {particles[i].fitness}")
+            
+            if iter == 0:
+                particles[i].pb = particles[i].fitness
+                particles[i].pb_pos = particles[i].positions
+                particles[i].gb = particles[i].fitness
+                particles[i].gb_pos = particles[i].positions
+                GB_PARTICLE = particles[i]
+            elif particles[i].pb > particles[i].fitness:
+                particles[i].pb = particles[i].fitness
+                particles[i].pb_pos = particles[i].positions
+            y[iter].append(particles[i].pb)
+
         
+        # Tentukan global best baru
+        max_gb = particles[0].gb
+        max_gb_pos = particles[0].gb_pos
+        
+        for i in range(len(particles)):
+            if particles[i].fitness < max_gb:
+                max_gb = particles[i].fitness
+                max_gb_pos = particles[i].positions
+                GB_PARTICLE = particles[i]
+                
+        for i in range(len(particles)):
+            particles[i].gb = max_gb
+            particles[i].gb_pos = max_gb_pos
+            
+            
+        # Update velocity
+        for i in range(len(particles)):
+            for j in range(len(particles[i].velocities)):        
+                vx = particles[i].velocities[j].x
+                vy = particles[i].velocities[j].y
+                vz = particles[i].velocities[j].z
+                vid = particles[i].velocities[j].id_kapal
+                
+                c1 = 1
+                c2 = 1
+                
+                vx = w * rnd(0,1) * vx + c1 * rnd(0,1) * (particles[i].pb_pos[j].x - particles[i].positions[j].x) + c2 * rnd(0, 1) * (particles[i].gb_pos[j].x - particles[i].positions[j].x)
+                vy = w * rnd(0,1) * vy + c1 * rnd(0,1) * (particles[i].pb_pos[j].y - particles[i].positions[j].y) + c2 * rnd(0, 1) * (particles[i].gb_pos[j].y - particles[i].positions[j].y)
+                vz = w * rnd(0,1) * vz + c1 * rnd(0,1) * (particles[i].pb_pos[j].z - particles[i].positions[j].z) + c2 * rnd(0, 1) * (particles[i].gb_pos[j].z - particles[i].positions[j].z)
+                vid = w * rnd(0,1) * vid + c1 * rnd(0,1) * (particles[i].pb_pos[j].id_kapal - particles[i].positions[j].id_kapal) + c2 * rnd(0, 1) * (particles[i].gb_pos[j].id_kapal - particles[i].positions[j].id_kapal)
+                
+                particles[i].velocities[j].x = vx
+                particles[i].velocities[j].y = vy
+                particles[i].velocities[j].z = vz
+                particles[i].velocities[j].id_kapal = vid
+                
+                
+        # Update position
+        for i in range(len(particles)):
+            for j in range(len(particles[i].positions)):
+                px = particles[i].positions[j].x
+                py = particles[i].positions[j].y
+                pz = particles[i].positions[j].z
+                pid = particles[i].positions[j].id_kapal
+                
+                px += particles[i].velocities[j].x
+                py += particles[i].velocities[j].y
+                pz += particles[i].velocities[j].z
+                pid += particles[i].velocities[j].id_kapal
+                
+                pid = max(0, min(pid, len(kapals)))
+                pid_int = math.floor(pid)
+                
+                if pid_int != len(kapals):
+                    if particles[i].items[j].jenis == "Umum":
+                        px = max(1, min(px, kapals[pid_int].x_max_umum))
+                        py = max(1, min(py, kapals[pid_int].y_max_umum))
+                    else:
+                        px = max(1, min(px, kapals[pid_int].x_max_khusus))
+                        py = max(1, min(py, kapals[pid_int].y_max_khusus))
+                
+                particles[i].positions[j].x = px
+                particles[i].positions[j].y = py
+                particles[i].positions[j].z = pz
+                particles[i].positions[j].id_kapal = pid
+        
+        print("Iteration " + str(iter) + ": " + str(max_gb))
+        gb_list.append(max_gb)
+
+        w = w - w_step
+        
+
+
+        plt.cla()
+        x = range(iter+1)
+        for i,p in enumerate(particles):
+            #get particle pb from y
+            value = []
+            for j in range(len(y)):
+                pb = y[j][i]
+                value.append(pb)
+
+            # print(value)
+            plt.plot(x, value, 'o-', label=f'Particle {i}')
+            # plt.annotate("tes", (x[i], value[i]), textcoords="offset points", xytext=(0,10), ha='center')
+
+        plt.grid()
+        plt.xlabel("Iterasi")
+        plt.ylabel("Personal Best")
+        plt.title("Particle's Pb Movement") #Judul grafik
+        plt.axis([0, iter+2, 0,10e7])
+        num_columns = PARTICLE_COUNT/10  # Adjust this based on the number of columns you want
+        plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1), ncol=num_columns)
+        
+
+        # adjust animation
+        plt.draw()
+        plt.pause(0.1)
+        
+        if iter >= same_gb_limit - 1:
+            if gb_list[iter-same_gb_limit + 1] == gb_list[iter]:
+                break
+        iter += 1
+
+    # Create a button and connect it to the rerun function
+    print()
+    # particle_header = ["ID", "Jenis", "Bobot", "Biaya/Ton", "Tujuan", "X", "Y", "Z", "ID Kapal"]
+    # particle_data = []
+    # total = 0
+    # for i in range(len(GB_PARTICLE.positions)):
+    #     particle_data.append([
+    #         i+1,
+    #         items[i].jenis,
+    #         items[i].bobot,
+    #         items[i].biaya_per_ton,
+    #         items[i].tujuan,
+    #         GB_PARTICLE.positions[i].x,
+    #         GB_PARTICLE.positions[i].y,
+    #         GB_PARTICLE.positions[i].z,
+    #         GB_PARTICLE.positions[i].id_kapal
+    #     ])
+        # total += items[i].bobot * items[i].biaya_per_ton  
+    
+    # print(tab(particle_data, headers=particle_header, tablefmt="grid"))
+    # print("Total Biaya: ", total)
+
+    if (btn_rerun == None):
+        ax_button = plt.axes([0.78, 0.15, 0.1, 0.05])  # [left, bottom, width, height]
+        btn_rerun = Button(ax_button, 'Rerun')
+        btn_rerun.on_clicked(rerun)
+
+        
+def rerun(event):
+    plt.clf()
+    global btn_rerun
+    btn_rerun = None
+    plot_data()
+    plt.show()
+
+
+plot_data()
+plt.show()  # Display the plot
