@@ -140,9 +140,9 @@ class Particle:
             s += str(vel)
             s += "\n"
         
-        s += "\nFitness: " + self.fitness
-        s += "\nPersonal Best: " + self.pb
-        s += "\nGlobal Best: " + self.gb
+        s += "\nFitness: " + str(self.fitness)
+        s += "\nPersonal Best: " + str(self.pb)
+        s += "\nGlobal Best: " + str(self.gb)
         
         return s + "\n"
    
@@ -229,12 +229,12 @@ kapals_data = [
     # [1, "Kapal 1", 50, 5, 10, 3, 4, [1, 3, 4, 2], 15, 15000],
     # [2, "Kapal 2", 60, 7, 20, 1, 5, [1, 2, 4, 3], 14, 14000],
     # [3, "Kapal 3", 60, 6, 10, 3, 4, [1, 4, 3, 2], 15, 15000]
-    [1, "Kapal 1", 1000, 1, 10, 1, 2, [1, 3, 4, 2], 15, 15000],
-    [2, "Kapal 2", 500, 5, 20, 3, 1, [1, 2, 4, 3], 14, 13000],
-    [3, "Kapal 3", 900, 1, 8, 1, 10, [1, 4, 3, 2], 15, 11000],
-    [4, "Kapal 4", 600, 1, 10, 1, 2, [1, 3, 2, 4], 16, 12500],
-    [5, "Kapal 5", 750, 5, 20, 3, 1, [1, 2, 3, 4], 16, 10000],
-    [6, "Kapal 6", 1100, 1, 8, 1, 10, [1, 4, 2, 3], 14, 9000],
+    [1, "Kapal 1", 230, 1, 10, 1, 2, [1, 3, 4, 2], 15, 15000],
+    [2, "Kapal 2", 400, 5, 20, 3, 1, [1, 2, 4, 3], 14, 13000],
+    [3, "Kapal 3", 100, 1, 8, 1, 10, [1, 4, 3, 2], 15, 11000],
+    [4, "Kapal 4", 500, 1, 10, 1, 2, [1, 3, 2, 4], 16, 12500],
+    [5, "Kapal 5", 200, 5, 20, 3, 1, [1, 2, 3, 4], 16, 10000],
+    [6, "Kapal 6", 350, 1, 8, 1, 10, [1, 4, 2, 3], 14, 9000],
 ]
 
 kapals = []
@@ -250,6 +250,9 @@ kapal_header = ["ID", "Nama", "Bobot", "X Maks U", "Y Maks U", "X Maks K", "Y Ma
 print(tab(kapals_data, headers=kapal_header, tablefmt="grid"))
 
 print('\n')
+
+
+
 
 # Items
 items_data = [
@@ -297,6 +300,12 @@ items_data = [
 
 items = []
 
+
+def multiplyPrice(by):
+    global items
+    for item in items:
+        item.biaya_per_ton *= by
+
 for data in items_data:
     item = Item(*data)
     items.append(item)
@@ -304,6 +313,8 @@ for data in items_data:
 # Mencetak informasi setiap item dalam array
 # for item in items:
 #     print(item)
+
+multiplyPrice(1)
 
 item_header = ["ID", "Nama", "Jenis", "Bobot", "Biaya per Ton", "Tujuan"]
 print(tab(items_data, headers=item_header, tablefmt="grid"))
@@ -331,7 +342,7 @@ def plot_data():
     gb_list = []
     iter = 0
     y = []
-
+    GB_PARTICLE = None
     
     # Iteration
     while True:
@@ -346,6 +357,7 @@ def plot_data():
                 particles[i].pb_pos = particles[i].positions
                 particles[i].gb = particles[i].fitness
                 particles[i].gb_pos = particles[i].positions
+                GB_PARTICLE = particles[i]
             elif particles[i].pb > particles[i].fitness:
                 particles[i].pb = particles[i].fitness
                 particles[i].pb_pos = particles[i].positions
@@ -360,6 +372,7 @@ def plot_data():
             if particles[i].fitness < max_gb:
                 max_gb = particles[i].fitness
                 max_gb_pos = particles[i].positions
+                GB_PARTICLE = particles[i]
                 
         for i in range(len(particles)):
             particles[i].gb = max_gb
@@ -457,16 +470,32 @@ def plot_data():
 
     # Create a button and connect it to the rerun function
     print()
+    # particle_header = ["ID", "Jenis", "Bobot", "Biaya/Ton", "Tujuan", "X", "Y", "Z", "ID Kapal"]
+    # particle_data = []
+    # total = 0
+    # for i in range(len(GB_PARTICLE.positions)):
+    #     particle_data.append([
+    #         i+1,
+    #         items[i].jenis,
+    #         items[i].bobot,
+    #         items[i].biaya_per_ton,
+    #         items[i].tujuan,
+    #         GB_PARTICLE.positions[i].x,
+    #         GB_PARTICLE.positions[i].y,
+    #         GB_PARTICLE.positions[i].z,
+    #         GB_PARTICLE.positions[i].id_kapal
+    #     ])
+        # total += items[i].bobot * items[i].biaya_per_ton  
+    
+    # print(tab(particle_data, headers=particle_header, tablefmt="grid"))
+    # print("Total Biaya: ", total)
+
     if (btn_rerun == None):
         ax_button = plt.axes([0.78, 0.15, 0.1, 0.05])  # [left, bottom, width, height]
         btn_rerun = Button(ax_button, 'Rerun')
         btn_rerun.on_clicked(rerun)
 
         
-
-
-
-
 def rerun(event):
     plt.clf()
     global btn_rerun
